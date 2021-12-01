@@ -1,13 +1,18 @@
 Package: PMCfetchR
-Title: What the Package Does (One Line, Title Case)
+Title: Extract Full-Text Articles from NIH NCBI's PMC Articles Dataset in AWS Cloud
 Version: 0.0.0.9000
 Authors@R: 
     person("Layla", "Bouzoubaa", , "lb3338@drexel.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6616-0950"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: This package contains functions to make retrieving full-text biomedical 
+  and life sciences articles from PMC's Articles Dataset easier by providing a way to convert PMIDs to PMCIDs
+  and using those PMCIDs to fetch articles from an AWS S3 bucket. Fetched articles are returned tidied and tokenized by default.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
+Depends: 
+    R (>= 2.10)
+Imports:
+    jsonlite
