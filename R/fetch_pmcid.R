@@ -7,8 +7,8 @@
 #' @export
 #'
 #' @examples
-#' get_pmcid(19023454, "7016449")
-get_pmcid <- function(...){
+#' fetch_pmcid(19023454, "7016449")
+fetch_pmcid <- function(...){
   # ... : vector of integers, chars, if more than one pmid supplied not as a vector
   id_ls = list(...)
 
@@ -30,14 +30,17 @@ get_pmcid <- function(...){
     PMCID <- convert$records$pmcid
 
     if(is.null(PMCID)){
+      # as.list(c("PMID" = id_to_char, "PMCID" = "invalid"))
       "invalid"
     }else{
+      # as.list(c("PMID" = id_to_char, "PMCID" = PMCID))
       PMCID
     }
   }
   )
-
+  # browser()
   names(id_to_pmc) <- id_to_char
+  # names_vec <- c("PMID","PMCID")
   id_to_pmc
 
 }
