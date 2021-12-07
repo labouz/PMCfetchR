@@ -17,17 +17,31 @@ fetch_fulltext <- function(id, vars = c("all", "section", "paragraph", "sentence
   call_bucket <- function(pmcid){
     # bucket and object specified separately
     paper_dir <- paste0("author_manuscript/xml/all/", pmcid, ".xml")
-    xml <- s3read_using(FUN = xml2::read_xml, bucket = "pmc-oa-opendata", object = paper_dir)
+    # include trycatch for pmcids that return error
+    tryCatch(
+      expr = {
+        capture.output(xml2 <- s3read_using(FUN = xml2::read_xml, bucket = "pmc-oa-opendata", object = paper_dir))
+        # tidy xml
+        xml_to_df <- suppressMessages(tidypmc::pmc_text(xml))
+        # process
+        if(vars != "all"){
+          xml_to_df <- xml_to_df[vars]
+        }
 
-    # tidy xml
-    xml_to_df <- suppressMessages(tidypmc::pmc_text(xml))
-    # process
-    if(vars != "all"){
-      xml_to_df <- xml_to_df[vars]
-    }
+        tibble(PMCID = pmcid, xml_to_df) %>%
+          mutate(id = 1:n())
 
-    tibble(PMCID = pmcid, xml_to_df) %>%
-      mutate(id = 1:n())
+        },
+
+      error = function(e){
+        message(paste0("Article ",pmcid, " does not exsist."))
+      }
+      # finally = {
+      #   message("All manuscripts have read")
+      # }
+    )
+
+
 
   }
 
