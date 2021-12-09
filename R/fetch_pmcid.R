@@ -10,8 +10,12 @@
 #' fetch_pmcid(19023454, "7016449")
 fetch_pmcid <- function(...){
   # ... : vector of integers, chars, if more than one pmid supplied not as a vector
-  id_ls = list(...)
 
+  if(...length() > 1){
+    id_ls <- list(...)
+  }else{
+    id_ls <- as.list(...)
+  }
   id_to_char <- lapply(
     X = id_ls,
     FUN = as.character
