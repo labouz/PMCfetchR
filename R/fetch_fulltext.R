@@ -32,38 +32,47 @@ fetch_fulltext <- function(id, vars = c("all", "section", "paragraph", "sentence
   # remove "invalid" PMCIDs ----
   id_ls <- Filter(function(x) x != "invalid", id_ls)
 
-  # FYI:returns all PMC articles in a prettier way
+  # FYI:returns 2k PMC articles in a prettier way
   # pmc_aws <- data.table::rbindlist(get_bucket("pmc-oa-opendata"))
 
   # call aws bucket for given pmcid and tidy ----
   call_bucket <- function(pmcid){
-    # bucket and object specified separately
-    paper_dir <- paste0("author_manuscript/xml/all/", pmcid, ".xml")
-    # include trycatch for pmcids that return error
-    tryCatch(
-      expr = {
-        capture.output(xml <- s3read_using(FUN = xml2::read_xml, bucket = "pmc-oa-opendata", object = paper_dir))
-        # tidy xml
-        xml_to_df <- suppressMessages(tidypmc::pmc_text(xml))
-        # process
-        if(vars != "all"){
-          xml_to_df <- xml_to_df[vars]
-        }
+    # URL for OPEN ACCESS CREATIVE COMMONS LICENSE
+    dir_oa_noncomm <- paste0("oa_noncomm/xml/all/", pmcid, ".xml")
+    # URL for OPEN ACCESS COMMERCIAL LICENSE
+    dir_oa_comm <- paste0("oa_comm/xml/all/", pmcid, ".xml")
+    # URL for AUTHOR MANUSCRIPT SUBSET
+    dir_auth <- paste0("author_manuscript/xml/all", pmcid, ".xml")
+    # wrap trycatch in a function to test the pmcid against each available URL
+    # trycatch for pmcids that return error
+    try_url <- function(url){
+      tryCatch(
+        expr = {
+          capture.output(xml <- s3read_using(FUN = xml2::read_xml,
+                                             bucket = "pmc-oa-opendata",
+                                             object = url))
+          # tidy xml
+          xml_to_df <- suppressMessages(tidypmc::pmc_text(xml))
+          # process
+          if(vars != "all"){
+            xml_to_df <- xml_to_df[vars]
+          }
 
-        tibble(PMCID = pmcid, xml_to_df) %>%
-          mutate(id = 1:n())
+          tibble(PMCID = pmcid, xml_to_df) %>%
+            mutate(id = 1:n())
 
         },
 
-      error = function(e){
-        message(paste0("Article ",pmcid, " does not exsist."))
-      }
-      # finally = {
-      #   message("All manuscripts have read")
-      # }
-    )
-
-
+        error = function(e){
+          message(paste0("Article ",pmcid, " does not exsist in ",
+                         str_extract(url, "([a-z]+_[a-z]+/)")))
+        }
+        # finally = {
+        #   message("All manuscripts have read")
+        # }
+      )
+    }
+    purrr::map_dfr(c(dir_oa_comm, dir_oa_noncomm, dir_auth), try_url)
 
   }
 
