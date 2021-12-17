@@ -14,11 +14,12 @@
 #' @importFrom magrittr %>%
 #' @importFrom rlang arg_match
 #' @importFrom xml2 read_xml
+#' @importFrom stringr str_extract
 #' @export
 #'
 #' @examples
-#' fetch_fulltext("PMC2480524")
-#' fetch_fulltext("PMC2480524", vars = c("text"))
+#' fetch_fulltext("PMC5465829")
+#' fetch_fulltext("PMC5465829", vars = c("text"))
 
 fetch_fulltext <- function(id, vars = c("all", "section", "paragraph", "sentence", "text")){
   # convert input, id, to list ----
@@ -35,46 +36,81 @@ fetch_fulltext <- function(id, vars = c("all", "section", "paragraph", "sentence
   # FYI:returns 2k PMC articles in a prettier way
   # pmc_aws <- data.table::rbindlist(get_bucket("pmc-oa-opendata"))
 
-  # call aws bucket for given pmcid and tidy ----
-  call_bucket <- function(pmcid){
+  # GET AWS DIRECTORIES BASED ON PMCID-------
+  get_source <- function(pmcid){
     # URL for OPEN ACCESS CREATIVE COMMONS LICENSE
     dir_oa_noncomm <- paste0("oa_noncomm/xml/all/", pmcid, ".xml")
     # URL for OPEN ACCESS COMMERCIAL LICENSE
     dir_oa_comm <- paste0("oa_comm/xml/all/", pmcid, ".xml")
     # URL for AUTHOR MANUSCRIPT SUBSET
     dir_auth <- paste0("author_manuscript/xml/all", pmcid, ".xml")
-    # wrap trycatch in a function to test the pmcid against each available URL
-    # trycatch for pmcids that return error
-    try_url <- function(url){
-      tryCatch(
-        expr = {
-          capture.output(xml <- s3read_using(FUN = xml2::read_xml,
-                                             bucket = "pmc-oa-opendata",
-                                             object = url))
-          # tidy xml
-          xml_to_df <- suppressMessages(tidypmc::pmc_text(xml))
-          # process
-          if(vars != "all"){
-            xml_to_df <- xml_to_df[vars]
-          }
 
-          tibble(PMCID = pmcid, xml_to_df) %>%
-            mutate(id = 1:n())
-
-        },
-
-        error = function(e){
-          message(paste0("Article ",pmcid, " does not exsist in ",
-                         str_extract(url, "([a-z]+_[a-z]+/)")))
-        }
-        # finally = {
-        #   message("All manuscripts have read")
-        # }
-      )
-    }
-    purrr::map_dfr(c(dir_oa_comm, dir_oa_noncomm, dir_auth), try_url)
-
+    return(list(dir_auth, dir_oa_comm, dir_oa_noncomm))
   }
 
-  map_df(id_ls, call_bucket)
+  # FUNCTION TO TRY EACH PMCID ON EACH AWS DIR---------------------
+  fetch_paper_aws <- function (pmcid, source){
+    paper <-  tryCatch(
+      expr = {
+        capture.output(xml <- s3read_using(FUN = xml2::read_xml,
+                                           bucket = "pmc-oa-opendata",
+                                           object = source))
+
+        # convert xml to df
+        xml_to_df(xml, pmcid)
+        # return paper
+      },
+      error = function(e){
+        message(paste0("Article ",pmcid, " does not exsist in s3://pmc-oa-opendata/",
+                       str_extract(source, "([a-z]+_[a-z]+/)")))
+
+      }
+    )
+    paper
+  }
+
+  # FAILSAFE FUNCTION THAT GETS CALLED IF NOTHING IS RETURNED FROM AWS------------
+  fetch_paper_eutility <- function (pmcid) {
+    # strip 'PMC' from PMCID
+    id <- str_remove(pmcid, "PMC")
+    api <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=",id)
+
+    response <- xml2::read_xml(api)
+    # convert xml to df
+    xml_to_df(response, pmcid)
+  }
+
+  # FUNCTION TO PARSE RETURNED XML TO DATAFRAME USING TIDYPMC---------
+  xml_to_df <- function(paper_xml, pmcid){
+    # tidy xml
+    df <- suppressMessages(tidypmc::pmc_text(paper_xml))
+    # process
+    if(vars != "all"){
+      df <- df[vars]
+    }
+
+    tibble(pmcid = pmcid, df) %>%
+      mutate(id = 1:n())
+  }
+
+  # FINAL FUNCTION CALL TO GET PAPERS FROM AWS OR EUTILITIES---------
+  fetch_paper_pmcid <- function (pmcid) {
+    # browser()
+    sources <- sapply(pmcid, get_source)
+    for (source in sources) {
+      paper <- fetch_paper_aws(pmcid, source)
+
+      if (!is.null(paper)) {
+        return(paper)
+        # exit function when there is a paper returned from AWS
+        break
+      }
+    }
+    # pmcid not found in AWS sources
+    paper <- fetch_paper_eutility(pmcid)
+
+    return(paper)
+  }
+
+  map_df(id_ls, fetch_paper_pmcid)
 }

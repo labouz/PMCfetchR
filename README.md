@@ -73,6 +73,17 @@ my_articles_df <- fetch_fulltext(my_pmcids)
 ```
 
 The function will print a message to the console if a particular PMCID
-article is not found in the AWS S3 Bucket.
+article is not found in each of the three AWS S3 Bucket directories.
+
+> NOTE: Due to copyright, some PMCIDs may only return the Title and
+> Abstract.
 
 ## Acknowledgements:
+
+Developing this package would be a lot more work if not for the
+[tidypmc](https://cran.r-project.org/web/packages/tidypmc/index.html)
+package.
+
+Chris Stubben (2021). tidypmc: Parse Full Text XML Documents from PubMed
+Central. <https://docs.ropensci.org/tidypmc>,
+<https://github.com/ropensci/tidypmc>.
