@@ -1,12 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# PMCfetchR
+# PMCfetchR - WIP
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-## Why cares?
+## Why?
 
 This package was developed out of frustration with how long it took me
 to read through NCBI’s
