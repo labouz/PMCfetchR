@@ -19,6 +19,6 @@ a tidy \code{data.frame} containing each manuscript retrieved, tokenized by sent
 Get full-text articles from PMC Open Access Subset in an AWS S3 bucket
 }
 \examples{
-fetch_fulltext("PMC2480524")
-fetch_fulltext("PMC2480524", vars = c("text"))
+fetch_fulltext("PMC5465829")
+fetch_fulltext("PMC5465829", vars = c("text"))
 }
