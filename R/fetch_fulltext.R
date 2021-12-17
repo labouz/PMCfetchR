@@ -14,7 +14,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom rlang arg_match
 #' @importFrom xml2 read_xml
-#' @importFrom stringr str_extract
+#' @importFrom stringr str_extract str_remove
 #' @export
 #'
 #' @examples
@@ -72,7 +72,7 @@ fetch_fulltext <- function(id, vars = c("all", "section", "paragraph", "sentence
   # FAILSAFE FUNCTION THAT GETS CALLED IF NOTHING IS RETURNED FROM AWS------------
   fetch_paper_eutility <- function (pmcid) {
     # strip 'PMC' from PMCID
-    id <- str_remove(pmcid, "PMC")
+    id <- stringr::str_remove(pmcid, "PMC")
     api <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=",id)
 
     response <- xml2::read_xml(api)

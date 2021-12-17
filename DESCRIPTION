@@ -1,6 +1,6 @@
 Package: PMCfetchR
 Title: Extract Full-Text Articles from NIH NCBI's PMC Articles Dataset in AWS Cloud
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Layla", "Bouzoubaa", , "lb3338@drexel.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6616-0950"))
@@ -23,7 +23,8 @@ Imports:
     aws.s3,
     magrittr,
     rlang,
-    xml2
+    xml2,
+    stringr
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
