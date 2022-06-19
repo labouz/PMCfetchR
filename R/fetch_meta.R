@@ -1,25 +1,13 @@
 #' Retrieve meta data for a paper given a PMCID or URL and/or specific meta data parameters and return a data.table
 #'
 #' @param id a single PMCID, a vector of PMCIDs or a list of PMCIDs returned from \code{\link{fetch_pmcid}}
-#' @param vars which variables you would like to keep in output dataframe, options
-#'   are \code{c("all", "section", "paragraph", "sentence", "text")}. Defaults to "all".
 #'
-#' @return a tidy \code{data.frame} containing the given input with all available meta data in wide format.
-#' @importFrom tibble tibble
-#' @importFrom aws.s3 s3read_using
-#' @importFrom tidypmc pmc_text
-#' @importFrom dplyr n mutate
-#' @importFrom purrr map_df
-#' @importFrom utils capture.output
-#' @importFrom magrittr %>%
+#' @return a \code{data.frame} containing all available meta data of an article in long format, given a PMID(s).
 #' @importFrom rlang arg_match
-#' @importFrom xml2 read_xml
-#' @importFrom stringr str_extract str_remove
 #' @export
 #'
 #' @examples
 #' fetch_meta("17284678")
-#' fetch_meta(17284678)
 
 fetch_meta <- function(id){
   # convert input, id, to list ----
@@ -48,6 +36,6 @@ fetch_meta <- function(id){
 
   })
 
-  do.call(bind, meta)
+  do.call(rbind, meta)
 
 }
